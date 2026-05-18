@@ -1,12 +1,30 @@
 import vine from '@vinejs/vine';
+const usernameRule = vine
+    .string()
+    .trim()
+    .minLength(3)
+    .maxLength(30)
+    .regex(/^[a-zA-Z0-9_]+$/);
+const phoneRule = vine
+    .string()
+    .trim()
+    .regex(/^\+[1-9]\d{6,15}$/);
 export const registerValidator = vine.compile(vine.object({
-    fullName: vine.string().trim().minLength(2).maxLength(80),
+    firstName: vine.string().trim().minLength(1).maxLength(60),
+    lastName: vine.string().trim().minLength(1).maxLength(60),
+    username: usernameRule,
     email: vine.string().trim().email().normalizeEmail(),
     password: vine.string().minLength(8).maxLength(120),
 }));
 export const loginValidator = vine.compile(vine.object({
     email: vine.string().trim().email().normalizeEmail(),
     password: vine.string(),
+}));
+export const updateProfileValidator = vine.compile(vine.object({
+    firstName: vine.string().trim().minLength(1).maxLength(60),
+    lastName: vine.string().trim().minLength(1).maxLength(60),
+    username: usernameRule,
+    phone: phoneRule.nullable().optional(),
 }));
 export const forgotPasswordValidator = vine.compile(vine.object({
     email: vine.string().trim().email().normalizeEmail(),

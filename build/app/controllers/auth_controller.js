@@ -10,6 +10,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 import { inject } from '@adonisjs/core';
 import AuthService from '#services/auth_service';
 import { forgotPasswordValidator, loginValidator, registerValidator, resetPasswordValidator, } from '#validators/auth_validator';
+import { presentUser } from '#presenters/user_presenter';
 let AuthController = class AuthController {
     authService;
     constructor(authService) {
@@ -19,7 +20,7 @@ let AuthController = class AuthController {
         const payload = await request.validateUsing(registerValidator);
         const { user, token } = await this.authService.register(payload);
         return response.created({
-            user: user.serialize(),
+            user: presentUser(user),
             token: token.value.release(),
         });
     }
@@ -27,7 +28,7 @@ let AuthController = class AuthController {
         const { email, password } = await request.validateUsing(loginValidator);
         const { user, token } = await this.authService.login(email, password);
         return {
-            user: user.serialize(),
+            user: presentUser(user),
             token: token.value.release(),
         };
     }
@@ -47,7 +48,7 @@ let AuthController = class AuthController {
         return response.noContent();
     }
     async me({ auth }) {
-        return { user: auth.getUserOrFail().serialize() };
+        return { user: presentUser(auth.getUserOrFail()) };
     }
 };
 AuthController = __decorate([

@@ -2,6 +2,7 @@ import router from '@adonisjs/core/services/router';
 import { middleware } from '#start/kernel';
 const AuthController = () => import('#controllers/auth_controller');
 const TattoosController = () => import('#controllers/tattoos_controller');
+const ProfileController = () => import('#controllers/profile_controller');
 router.get('/', () => {
     return { name: 'Tattoo Sketch Generator API', status: 'ok' };
 });
@@ -14,8 +15,11 @@ router
     router.post('/auth/logout', [AuthController, 'logout']).use(middleware.auth());
     router.get('/auth/me', [AuthController, 'me']).use(middleware.auth());
     router.get('/tattoos/images/:filename', [TattoosController, 'serveImage']);
+    router.get('/users/avatars/:filename', [ProfileController, 'serveAvatar']);
     router
         .group(() => {
+        router.patch('/profile', [ProfileController, 'update']);
+        router.post('/profile/avatar', [ProfileController, 'uploadAvatar']);
         router.post('/tattoos/generate', [TattoosController, 'generate']);
         router.post('/tattoos/suggest-prompt', [TattoosController, 'suggestPrompt']);
         router

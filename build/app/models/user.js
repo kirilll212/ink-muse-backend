@@ -27,12 +27,28 @@ __decorate([
 ], User.prototype, "id", void 0);
 __decorate([
     column(),
-    __metadata("design:type", Object)
-], User.prototype, "fullName", void 0);
+    __metadata("design:type", String)
+], User.prototype, "firstName", void 0);
+__decorate([
+    column(),
+    __metadata("design:type", String)
+], User.prototype, "lastName", void 0);
+__decorate([
+    column(),
+    __metadata("design:type", String)
+], User.prototype, "username", void 0);
 __decorate([
     column(),
     __metadata("design:type", String)
 ], User.prototype, "email", void 0);
+__decorate([
+    column(),
+    __metadata("design:type", Object)
+], User.prototype, "phone", void 0);
+__decorate([
+    column(),
+    __metadata("design:type", Object)
+], User.prototype, "avatarPath", void 0);
 __decorate([
     column({ serializeAs: null }),
     __metadata("design:type", String)

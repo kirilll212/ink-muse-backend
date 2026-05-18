@@ -22,14 +22,20 @@ let AuthService = class AuthService {
         this.passwordResetRepository = passwordResetRepository;
     }
     async register(payload) {
-        const existing = await this.userRepository.findByEmail(payload.email);
-        if (existing) {
+        const username = payload.username.toLowerCase();
+        if (await this.userRepository.findByEmail(payload.email)) {
             throw new Exception('An account with this email already exists', {
                 status: 409,
                 code: 'E_EMAIL_TAKEN',
             });
         }
-        const user = await this.userRepository.create(payload);
+        if (await this.userRepository.findByUsername(username)) {
+            throw new Exception('This username is already taken', {
+                status: 409,
+                code: 'E_USERNAME_TAKEN',
+            });
+        }
+        const user = await this.userRepository.create({ ...payload, username });
         const token = await User.accessTokens.create(user);
         return { user, token };
     }

@@ -80,15 +80,18 @@ let TattooService = class TattooService {
         return updated;
     }
     async suggestDescription(selection) {
+        const styleName = selection.style.replace(/-/g, ' ');
         const instruction = [
-            'You are a professional tattoo artist brainstorming ideas for a client.',
-            `Propose ONE creative tattoo design concept intended for the ${selection.bodyPart}.`,
-            `Artistic style: ${STYLE_PROMPTS[selection.style]}.`,
-            `The tattoo measures roughly ${selection.widthCm} by ${selection.heightCm} centimetres,`,
-            'so keep the composition appropriate for that real-world size.',
-            'Reply with a single vivid sentence (15 to 35 words) describing only the subject,',
+            'You are a professional tattoo artist brainstorming a concept for a client.',
+            'Base the idea strictly on these three given parameters and nothing else:',
+            `body part = ${selection.bodyPart};`,
+            `tattoo style = ${styleName} (${STYLE_PROMPTS[selection.style]});`,
+            `size = about ${selection.widthCm} by ${selection.heightCm} centimetres.`,
+            'The concept must clearly suit that style, fit naturally on that body part,',
+            'and work well at that real-world size.',
+            'Reply with ONE vivid sentence (15 to 30 words) describing only the subject,',
             'mood and composition of the tattoo.',
-            'Do not include quotes, headings, style names, body-part names, measurements or any preamble.',
+            'Do not mention the style name, the body part, measurements, quotes, headings or any preamble.',
         ].join(' ');
         const raw = await this.pollinationsService.generateText(instruction);
         return this.sanitizeSuggestion(raw);
@@ -110,14 +113,21 @@ let TattooService = class TattooService {
     }
     buildPrompt(payload) {
         const styleFragment = STYLE_PROMPTS[payload.style];
+        const styleName = payload.style.replace(/-/g, ' ');
+        const orientation = payload.widthCm > payload.heightCm * 1.15
+            ? 'wide horizontal composition'
+            : payload.heightCm > payload.widthCm * 1.15
+                ? 'tall vertical composition'
+                : 'balanced centered composition';
         return [
-            'tattoo design',
+            `tattoo design of ${payload.description.trim()}`,
+            `${styleName} tattoo style`,
             styleFragment,
-            payload.description.trim(),
-            `intended for placement on the ${payload.bodyPart}`,
-            `sized for a ${payload.widthCm} by ${payload.heightCm} cm area of skin`,
-            'isolated on a clean white background',
-            'high detail, crisp ink, sketch',
+            'professional tattoo flash art, stencil-ready, clean confident linework, crisp sharp edges, bold readable silhouette, deliberate negative space',
+            `${orientation}, a single cohesive subject sized and shaped for a ${payload.bodyPart} tattoo of roughly ${payload.widthCm} by ${payload.heightCm} cm`,
+            'high detail, high contrast, vector-like precision, perfectly centered',
+            'the tattoo artwork only, isolated on a plain solid white background',
+            'no skin, no body, no human, no photo background, no mockup, no frame, no border, no text, no lettering, no watermark, no signature',
         ].join(', ');
     }
     sanitizeSuggestion(text) {

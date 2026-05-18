@@ -17,10 +17,23 @@ export default class User extends compose(BaseModel, AuthFinder) {
   declare id: number
 
   @column()
-  declare fullName: string | null
+  declare firstName: string
+
+  @column()
+  declare lastName: string
+
+  @column()
+  declare username: string
 
   @column()
   declare email: string
+
+  @column()
+  declare phone: string | null
+
+  /** File name of the uploaded avatar image, if any. */
+  @column()
+  declare avatarPath: string | null
 
   @column({ serializeAs: null })
   declare password: string

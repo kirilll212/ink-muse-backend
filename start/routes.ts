@@ -12,6 +12,7 @@ import { middleware } from '#start/kernel'
 
 const AuthController = () => import('#controllers/auth_controller')
 const TattoosController = () => import('#controllers/tattoos_controller')
+const ProfileController = () => import('#controllers/profile_controller')
 
 /**
  * Health check / API root.
@@ -36,12 +37,16 @@ router
      * Public image streaming (loaded directly by <img> tags).
      */
     router.get('/tattoos/images/:filename', [TattoosController, 'serveImage'])
+    router.get('/users/avatars/:filename', [ProfileController, 'serveAvatar'])
 
     /**
-     * Tattoo generation + history (authenticated).
+     * Profile + tattoo generation + history (authenticated).
      */
     router
       .group(() => {
+        router.patch('/profile', [ProfileController, 'update'])
+        router.post('/profile/avatar', [ProfileController, 'uploadAvatar'])
+
         router.post('/tattoos/generate', [TattoosController, 'generate'])
         router.post('/tattoos/suggest-prompt', [TattoosController, 'suggestPrompt'])
         router

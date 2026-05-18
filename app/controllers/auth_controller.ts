@@ -7,6 +7,7 @@ import {
   registerValidator,
   resetPasswordValidator,
 } from '#validators/auth_validator'
+import { presentUser } from '#presenters/user_presenter'
 
 /**
  * Handles registration, login, logout and the current-user endpoint.
@@ -26,7 +27,7 @@ export default class AuthController {
     const { user, token } = await this.authService.register(payload)
 
     return response.created({
-      user: user.serialize(),
+      user: presentUser(user),
       token: token.value!.release(),
     })
   }
@@ -39,7 +40,7 @@ export default class AuthController {
     const { user, token } = await this.authService.login(email, password)
 
     return {
-      user: user.serialize(),
+      user: presentUser(user),
       token: token.value!.release(),
     }
   }
@@ -80,6 +81,6 @@ export default class AuthController {
    * GET /api/auth/me
    */
   async me({ auth }: HttpContext) {
-    return { user: auth.getUserOrFail().serialize() }
+    return { user: presentUser(auth.getUserOrFail()) }
   }
 }
