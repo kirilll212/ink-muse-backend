@@ -1,7 +1,12 @@
 import type { HttpContext } from '@adonisjs/core/http'
 import { inject } from '@adonisjs/core'
 import AuthService from '#services/auth_service'
-import { loginValidator, registerValidator } from '#validators/auth_validator'
+import {
+  forgotPasswordValidator,
+  loginValidator,
+  registerValidator,
+  resetPasswordValidator,
+} from '#validators/auth_validator'
 
 /**
  * Handles registration, login, logout and the current-user endpoint.
@@ -37,6 +42,28 @@ export default class AuthController {
       user: user.serialize(),
       token: token.value!.release(),
     }
+  }
+
+  /**
+   * POST /api/auth/forgot-password — issue a password reset code.
+   *
+   * With no email delivery configured, the code is returned in the response.
+   */
+  async forgotPassword({ request }: HttpContext) {
+    const { email } = await request.validateUsing(forgotPasswordValidator)
+    const { code, expiresInMinutes } = await this.authService.requestPasswordReset(email)
+
+    return { email, code, expiresInMinutes }
+  }
+
+  /**
+   * POST /api/auth/reset-password — set a new password using a reset code.
+   */
+  async resetPassword({ request, response }: HttpContext) {
+    const { email, code, password } = await request.validateUsing(resetPasswordValidator)
+    await this.authService.resetPassword(email, code, password)
+
+    return response.ok({ success: true })
   }
 
   /**

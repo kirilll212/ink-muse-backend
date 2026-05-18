@@ -8,4 +8,12 @@ export const loginValidator = vine.compile(vine.object({
     email: vine.string().trim().email().normalizeEmail(),
     password: vine.string(),
 }));
+export const forgotPasswordValidator = vine.compile(vine.object({
+    email: vine.string().trim().email().normalizeEmail(),
+}));
+export const resetPasswordValidator = vine.compile(vine.object({
+    email: vine.string().trim().email().normalizeEmail(),
+    code: vine.string().trim().regex(/^\d{6}$/),
+    password: vine.string().minLength(8).maxLength(120),
+}));
 //# sourceMappingURL=auth_validator.js.map

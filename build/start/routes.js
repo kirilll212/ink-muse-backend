@@ -9,6 +9,8 @@ router
     .group(() => {
     router.post('/auth/register', [AuthController, 'register']);
     router.post('/auth/login', [AuthController, 'login']);
+    router.post('/auth/forgot-password', [AuthController, 'forgotPassword']);
+    router.post('/auth/reset-password', [AuthController, 'resetPassword']);
     router.post('/auth/logout', [AuthController, 'logout']).use(middleware.auth());
     router.get('/auth/me', [AuthController, 'me']).use(middleware.auth());
     router.get('/tattoos/images/:filename', [TattoosController, 'serveImage']);

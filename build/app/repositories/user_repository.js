@@ -6,5 +6,9 @@ export default class UserRepository {
     async create(data) {
         return User.create(data);
     }
+    async updatePassword(user, password) {
+        user.password = password;
+        await user.save();
+    }
 }
 //# sourceMappingURL=user_repository.js.map
