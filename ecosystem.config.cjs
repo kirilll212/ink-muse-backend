@@ -7,6 +7,7 @@ module.exports = {
       out_file: './tmp/out.log',
       log_file: './tmp/combined.log',
       log_date_format: 'YYYY-MM-DD_HH-mm-ss',
+      autorestart: true,
       ignore_watch: [
         'node_modules',
         'public',
