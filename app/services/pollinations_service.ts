@@ -51,9 +51,15 @@ export default class PollinationsService {
   private readonly timeoutMs = 100_000
 
   /**
-   * How many times to attempt generation before giving up.
+   * How many times to attempt image generation before giving up.
    */
-  private readonly maxAttempts = 3
+  private readonly maxImageAttempts = 3
+
+  /**
+   * Text generation is more flaky on cold-start (Pollinations frequently
+   * returns 5xx on the first request after an idle period), so retry harder.
+   */
+  private readonly maxTextAttempts = 5
 
   /**
    * Generate an image for the given prompt and return its raw bytes.
@@ -62,15 +68,15 @@ export default class PollinationsService {
     const url = this.buildUrl(prompt, options)
     let lastError: unknown
 
-    for (let attempt = 1; attempt <= this.maxAttempts; attempt++) {
+    for (let attempt = 1; attempt <= this.maxImageAttempts; attempt++) {
       try {
         return await this.requestImage(url)
       } catch (error) {
         lastError = error
         logger.warn({ attempt, err: error }, 'Pollinations attempt failed')
 
-        if (attempt < this.maxAttempts) {
-          await this.delay(attempt * 2_000)
+        if (attempt < this.maxImageAttempts) {
+          await this.delay(this.backoffMs(attempt))
         }
       }
     }
@@ -89,15 +95,15 @@ export default class PollinationsService {
   async generateText(prompt: string): Promise<string> {
     let lastError: unknown
 
-    for (let attempt = 1; attempt <= this.maxAttempts; attempt++) {
+    for (let attempt = 1; attempt <= this.maxTextAttempts; attempt++) {
       try {
         return await this.requestText(prompt)
       } catch (error) {
         lastError = error
         logger.warn({ attempt, err: error }, 'Pollinations text attempt failed')
 
-        if (attempt < this.maxAttempts) {
-          await this.delay(attempt * 1_000)
+        if (attempt < this.maxTextAttempts) {
+          await this.delay(this.backoffMs(attempt))
         }
       }
     }
@@ -107,6 +113,21 @@ export default class PollinationsService {
       status: 502,
       code: 'E_PROMPT_SUGGESTION_FAILED',
     })
+  }
+
+  /**
+   * Send a tiny request to both endpoints to wake Pollinations' upstream
+   * workers so the first real user request doesn't pay the cold-start cost.
+   * Fire-and-forget: any failure here is silently ignored.
+   */
+  async warmUp(): Promise<void> {
+    const tasks: Promise<unknown>[] = [
+      this.requestText('hi').catch(() => undefined),
+      this.requestImage(this.buildUrl('hi', { width: 256, height: 256, seed: 1 })).catch(
+        () => undefined
+      ),
+    ]
+    await Promise.allSettled(tasks)
   }
 
   /**
@@ -187,5 +208,16 @@ export default class PollinationsService {
    */
   private delay(ms: number): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, ms))
+  }
+
+  /**
+   * Exponential back-off with light jitter: ~1s, 2s, 4s, 8s, 12s. Used for
+   * retrying a failed Pollinations call — Pollinations cold-starts can take a
+   * few seconds, so the gap grows quickly after the first miss.
+   */
+  private backoffMs(attempt: number): number {
+    const base = Math.min(12_000, 1_000 * Math.pow(2, attempt - 1))
+    const jitter = Math.floor(Math.random() * 500)
+    return base + jitter
   }
 }

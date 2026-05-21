@@ -34,6 +34,20 @@ new Ignitor(APP_ROOT, { importer: IMPORTER })
     app.booting(async () => {
       await import('#start/env')
     })
+    // Fire-and-forget warm-up of Pollinations once the app is ready, so the
+    // cold-start 502 lands here instead of in the first user request.
+    app.ready(async () => {
+      try {
+        const { default: PollinationsService } = await import(
+          '#services/pollinations_service'
+        )
+        const service = await app.container.make(PollinationsService)
+        void service.warmUp()
+      } catch {
+        // Warm-up failures are intentionally silent — the regular retry path
+        // still serves real user requests correctly.
+      }
+    })
     app.listen('SIGTERM', () => app.terminate())
     app.listenIf(app.managedByPm2, 'SIGINT', () => app.terminate())
   })

@@ -14,7 +14,7 @@ import app from '@adonisjs/core/services/app';
 import { Exception } from '@adonisjs/core/exceptions';
 import TattooRepository from '#repositories/tattoo_repository';
 import PollinationsService from '#services/pollinations_service';
-import { imageDimensionsForSize, STYLE_EXAMPLES, STYLE_PROMPTS, } from '#constants/tattoo_options';
+import { BODY_PART_HINTS, imageDimensionsForSize, STYLE_EXAMPLES, STYLE_PROMPTS, } from '#constants/tattoo_options';
 let TattooService = class TattooService {
     tattooRepository;
     pollinationsService;
@@ -117,22 +117,34 @@ let TattooService = class TattooService {
         const styleFragment = STYLE_PROMPTS[payload.style];
         const styleName = payload.style.replace(/-/g, ' ');
         const styleExample = STYLE_EXAMPLES[payload.style];
+        const bodyHint = BODY_PART_HINTS[payload.bodyPart];
+        const detailLevel = this.detailLevelFor(payload.widthCm, payload.heightCm);
         const orientation = payload.widthCm > payload.heightCm * 1.15
             ? 'wide horizontal composition'
             : payload.heightCm > payload.widthCm * 1.15
                 ? 'tall vertical composition'
-                : 'balanced centered composition';
+                : 'balanced square composition';
         return [
-            `tattoo design of ${payload.description.trim()}`,
-            `${styleName} tattoo style`,
+            `professional ${styleName} tattoo design of ${payload.description.trim()}`,
+            `authentic ${styleName} tattoo style`,
             styleFragment,
-            `rendered with the same visual language as a canonical ${styleName} example such as ${styleExample}`,
-            'professional tattoo flash art, stencil-ready, clean confident linework, crisp sharp edges, bold readable silhouette, deliberate negative space',
-            `${orientation}, a single cohesive subject sized and shaped for a ${payload.bodyPart} tattoo of roughly ${payload.widthCm} by ${payload.heightCm} cm`,
-            'high detail, high contrast, vector-like precision, perfectly centered',
-            'the tattoo artwork only, isolated on a plain solid white background',
-            'no skin, no body, no human, no photo background, no mockup, no frame, no border, no text, no lettering, no watermark, no signature',
+            `drawn with the visual language of canonical ${styleName} tattoos such as ${styleExample}`,
+            `${orientation}, ${bodyHint}, sized for a roughly ${payload.widthCm} by ${payload.heightCm} cm tattoo`,
+            detailLevel,
+            'masterpiece, award-winning tattoo flash art, stencil-ready, clean confident linework, crisp sharp edges, bold readable silhouette, deliberate negative space, high contrast, vector-like precision, perfectly centred, sharp focus',
+            'the tattoo artwork only, isolated on a plain solid pure-white background, studio-clean presentation',
+            'no skin, no body, no human, no photo background, no scenery, no mockup, no frame, no border, no shadow, no text, no lettering, no watermark, no signature, no logo, no 3D rendering, no blur',
         ].join(', ');
+    }
+    detailLevelFor(widthCm, heightCm) {
+        const longest = Math.max(widthCm, heightCm);
+        if (longest <= 5) {
+            return 'minimal essential detail suited for a small piece, no busy elements';
+        }
+        if (longest <= 15) {
+            return 'moderate detail suited for a medium piece, clear focal point';
+        }
+        return 'intricate rich detail suited for a large piece, multiple readable layers';
     }
     sanitizeSuggestion(text) {
         const cleaned = text

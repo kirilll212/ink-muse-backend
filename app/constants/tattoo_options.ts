@@ -106,6 +106,27 @@ export const STYLE_PROMPTS: Record<Style, string> = {
 }
 
 /**
+ * Per-body-part composition hints that nudge the AI towards a shape and
+ * placement that actually fit the chosen part of the body. The user's
+ * width/height already drive the broad orientation; these hints add
+ * anatomy-specific cues on top.
+ */
+export const BODY_PART_HINTS: Record<BodyPart, string> = {
+  arm: 'shaped to fit the rounded outer surface of an upper arm, vertical column',
+  forearm: 'shaped to fit a forearm, vertical elongated column',
+  shoulder: 'shaped to follow the rounded curve of a shoulder cap',
+  chest: 'shaped for the upper chest, wide and centred over the sternum',
+  back: 'shaped for an upper back panel, large balanced composition',
+  leg: 'shaped to fit a thigh, vertical column with strong centre',
+  calf: 'shaped to fit a calf, vertical column tapering at the ankle',
+  ankle: 'shaped to fit a small narrow band around an ankle',
+  wrist: 'shaped to fit a narrow horizontal band around a wrist',
+  hand: 'shaped to fit the top of a hand, compact composition with fine detail',
+  neck: 'shaped to fit the side of a neck, vertical compact composition',
+  ribs: 'shaped to flow along the rib cage, tall vertical composition with gentle curve',
+}
+
+/**
  * A canonical subject most associated with each style — the same iconic motif
  * shown in the frontend style-guide modal (`frontend/public/style-examples/`).
  *

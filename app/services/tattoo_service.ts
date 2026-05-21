@@ -8,6 +8,7 @@ import User from '#models/user'
 import TattooRepository from '#repositories/tattoo_repository'
 import PollinationsService from '#services/pollinations_service'
 import {
+  BODY_PART_HINTS,
   imageDimensionsForSize,
   STYLE_EXAMPLES,
   STYLE_PROMPTS,
@@ -193,41 +194,74 @@ export default class TattooService {
   /**
    * Compose the prompt sent to the AI model from the user's selections.
    *
-   * Every selection ends up in the final prompt:
-   *   1. body part — drives placement, orientation and a size cue
-   *   2. style + canonical example for that style — anchors the visual language
-   *   3. sketch size (real-world cm) — drives composition and aspect ratio
-   *   4. description — the actual subject the user wants to see
+   * Every selection is woven into the final prompt:
+   *   1. body part — placement, orientation, anatomy-specific composition
+   *   2. style + canonical example — anchors the visual language
+   *   3. sketch size (cm)            — informs density, detail level and aspect ratio
+   *   4. description                 — the actual subject the user wants
    *
-   * The prompt is tuned to produce a clean, usable tattoo *design* — the
-   * artwork only, on a plain white background — rather than a photo of a
-   * tattooed body. The subject leads the prompt (diffusion models weight the
-   * opening strongest), followed by the style + example, craft cues,
-   * composition and a firm set of exclusions.
+   * The structure follows Flux-friendly prompt best practices:
+   *   • subject leads (diffusion models weight the opening tokens strongest)
+   *   • a strong style block (name + craft fragment + iconic example)
+   *   • concrete composition + size cues
+   *   • quality boosters
+   *   • firm exclusions at the end (negative-prompt-style)
+   *
+   * The output is intentionally a *tattoo design* — flash-sheet artwork on a
+   * clean white background — not a photo of a tattooed body.
    */
   private buildPrompt(payload: GenerateTattooPayload): string {
     const styleFragment = STYLE_PROMPTS[payload.style]
     const styleName = payload.style.replace(/-/g, ' ')
     const styleExample = STYLE_EXAMPLES[payload.style]
+    const bodyHint = BODY_PART_HINTS[payload.bodyPart]
+    const detailLevel = this.detailLevelFor(payload.widthCm, payload.heightCm)
 
     const orientation =
       payload.widthCm > payload.heightCm * 1.15
         ? 'wide horizontal composition'
         : payload.heightCm > payload.widthCm * 1.15
           ? 'tall vertical composition'
-          : 'balanced centered composition'
+          : 'balanced square composition'
 
     return [
-      `tattoo design of ${payload.description.trim()}`,
-      `${styleName} tattoo style`,
+      // 1. Subject (lead — strongest weight).
+      `professional ${styleName} tattoo design of ${payload.description.trim()}`,
+
+      // 2. Style block: name + craft cues + canonical iconic example.
+      `authentic ${styleName} tattoo style`,
       styleFragment,
-      `rendered with the same visual language as a canonical ${styleName} example such as ${styleExample}`,
-      'professional tattoo flash art, stencil-ready, clean confident linework, crisp sharp edges, bold readable silhouette, deliberate negative space',
-      `${orientation}, a single cohesive subject sized and shaped for a ${payload.bodyPart} tattoo of roughly ${payload.widthCm} by ${payload.heightCm} cm`,
-      'high detail, high contrast, vector-like precision, perfectly centered',
-      'the tattoo artwork only, isolated on a plain solid white background',
-      'no skin, no body, no human, no photo background, no mockup, no frame, no border, no text, no lettering, no watermark, no signature',
+      `drawn with the visual language of canonical ${styleName} tattoos such as ${styleExample}`,
+
+      // 3. Composition + body-part + size.
+      `${orientation}, ${bodyHint}, sized for a roughly ${payload.widthCm} by ${payload.heightCm} cm tattoo`,
+      detailLevel,
+
+      // 4. Quality boosters.
+      'masterpiece, award-winning tattoo flash art, stencil-ready, clean confident linework, crisp sharp edges, bold readable silhouette, deliberate negative space, high contrast, vector-like precision, perfectly centred, sharp focus',
+
+      // 5. Output framing.
+      'the tattoo artwork only, isolated on a plain solid pure-white background, studio-clean presentation',
+
+      // 6. Exclusions (negative prompt).
+      'no skin, no body, no human, no photo background, no scenery, no mockup, no frame, no border, no shadow, no text, no lettering, no watermark, no signature, no logo, no 3D rendering, no blur',
     ].join(', ')
+  }
+
+  /**
+   * Map the real-world tattoo size to a detail-level cue. Tiny tattoos can't
+   * carry busy detail, so we ask for cleaner simpler artwork; large pieces
+   * benefit from intricate detail.
+   */
+  private detailLevelFor(widthCm: number, heightCm: number): string {
+    const longest = Math.max(widthCm, heightCm)
+    if (longest <= 5) {
+      return 'minimal essential detail suited for a small piece, no busy elements'
+    }
+    if (longest <= 15) {
+      return 'moderate detail suited for a medium piece, clear focal point'
+    }
+    return 'intricate rich detail suited for a large piece, multiple readable layers'
   }
 
   /**

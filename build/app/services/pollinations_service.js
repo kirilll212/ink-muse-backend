@@ -8,19 +8,20 @@ export default class PollinationsService {
     token = env.get('POLLINATIONS_TOKEN');
     referrer = env.get('APP_REFERRER', 'tattoo-sketch-generator');
     timeoutMs = 100_000;
-    maxAttempts = 3;
+    maxImageAttempts = 3;
+    maxTextAttempts = 5;
     async generateImage(prompt, options) {
         const url = this.buildUrl(prompt, options);
         let lastError;
-        for (let attempt = 1; attempt <= this.maxAttempts; attempt++) {
+        for (let attempt = 1; attempt <= this.maxImageAttempts; attempt++) {
             try {
                 return await this.requestImage(url);
             }
             catch (error) {
                 lastError = error;
                 logger.warn({ attempt, err: error }, 'Pollinations attempt failed');
-                if (attempt < this.maxAttempts) {
-                    await this.delay(attempt * 2_000);
+                if (attempt < this.maxImageAttempts) {
+                    await this.delay(this.backoffMs(attempt));
                 }
             }
         }
@@ -32,15 +33,15 @@ export default class PollinationsService {
     }
     async generateText(prompt) {
         let lastError;
-        for (let attempt = 1; attempt <= this.maxAttempts; attempt++) {
+        for (let attempt = 1; attempt <= this.maxTextAttempts; attempt++) {
             try {
                 return await this.requestText(prompt);
             }
             catch (error) {
                 lastError = error;
                 logger.warn({ attempt, err: error }, 'Pollinations text attempt failed');
-                if (attempt < this.maxAttempts) {
-                    await this.delay(attempt * 1_000);
+                if (attempt < this.maxTextAttempts) {
+                    await this.delay(this.backoffMs(attempt));
                 }
             }
         }
@@ -49,6 +50,13 @@ export default class PollinationsService {
             status: 502,
             code: 'E_PROMPT_SUGGESTION_FAILED',
         });
+    }
+    async warmUp() {
+        const tasks = [
+            this.requestText('hi').catch(() => undefined),
+            this.requestImage(this.buildUrl('hi', { width: 256, height: 256, seed: 1 })).catch(() => undefined),
+        ];
+        await Promise.allSettled(tasks);
     }
     async requestText(prompt) {
         const controller = new AbortController();
@@ -104,6 +112,11 @@ export default class PollinationsService {
     }
     delay(ms) {
         return new Promise((resolve) => setTimeout(resolve, ms));
+    }
+    backoffMs(attempt) {
+        const base = Math.min(12_000, 1_000 * Math.pow(2, attempt - 1));
+        const jitter = Math.floor(Math.random() * 500);
+        return base + jitter;
     }
 }
 //# sourceMappingURL=pollinations_service.js.map

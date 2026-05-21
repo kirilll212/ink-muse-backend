@@ -12,6 +12,15 @@ new Ignitor(APP_ROOT, { importer: IMPORTER })
     app.booting(async () => {
         await import('#start/env');
     });
+    app.ready(async () => {
+        try {
+            const { default: PollinationsService } = await import('#services/pollinations_service');
+            const service = await app.container.make(PollinationsService);
+            void service.warmUp();
+        }
+        catch {
+        }
+    });
     app.listen('SIGTERM', () => app.terminate());
     app.listenIf(app.managedByPm2, 'SIGINT', () => app.terminate());
 })
