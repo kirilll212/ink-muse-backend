@@ -104,3 +104,32 @@ export const STYLE_PROMPTS: Record<Style, string> = {
   'biomechanical': 'biomechanical tattoo, fused machine and organic anatomy, 3D depth',
   'trash-polka': 'trash polka tattoo, black and red, collage of realism and abstract strokes',
 }
+
+/**
+ * A canonical subject most associated with each style — the same iconic motif
+ * shown in the frontend style-guide modal (`frontend/public/style-examples/`).
+ *
+ * Used as an *inspirational reference* in the AI prompts: it anchors the model
+ * on what the style typically looks like without forcing the user's actual
+ * subject to be replaced by it.
+ */
+export const STYLE_EXAMPLES: Record<Style, string> = {
+  'line-art': 'a single rose with a long thorny stem',
+  'minimalist': 'a tiny mountain peak with two triangles',
+  'geometric': 'a stag head built from triangles and polygons',
+  'traditional': 'a flying swallow with a banner ribbon',
+  'neo-traditional': 'a fox portrait surrounded by peonies',
+  'realistic': 'a photorealistic tiger portrait',
+  'blackwork': 'a raven with spread wings in solid black',
+  'dotwork': 'a sacred-geometry mandala built from stippled dots',
+  'tribal': 'a polynesian-style sea turtle',
+  'watercolor': 'a hummingbird with loose colourful paint splashes',
+  'japanese': 'a koi fish swimming through curling waves',
+  'new-school': 'a cartoon shark with bubbles in vivid colours',
+  'sketch': 'a wild horse head drawn in loose pencil strokes',
+  'ornamental': 'an ornate elephant decorated with filigree patterns',
+  'surrealism': 'a melting pocket watch draped over a tree branch',
+  'engraving': 'a tall sailing ship on stormy seas with fine hatching',
+  'biomechanical': 'a robotic skeletal arm with cables and pistons',
+  'trash-polka': 'a human-eye portrait combined with red brush strokes and torn paper',
+}

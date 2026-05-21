@@ -14,7 +14,7 @@ import app from '@adonisjs/core/services/app';
 import { Exception } from '@adonisjs/core/exceptions';
 import TattooRepository from '#repositories/tattoo_repository';
 import PollinationsService from '#services/pollinations_service';
-import { imageDimensionsForSize, STYLE_PROMPTS, } from '#constants/tattoo_options';
+import { imageDimensionsForSize, STYLE_EXAMPLES, STYLE_PROMPTS, } from '#constants/tattoo_options';
 let TattooService = class TattooService {
     tattooRepository;
     pollinationsService;
@@ -81,11 +81,13 @@ let TattooService = class TattooService {
     }
     async suggestDescription(selection) {
         const styleName = selection.style.replace(/-/g, ' ');
+        const styleExample = STYLE_EXAMPLES[selection.style];
         const instruction = [
             'You are a professional tattoo artist brainstorming a concept for a client.',
-            'Base the idea strictly on these three given parameters and nothing else:',
+            'Base the idea strictly on these parameters and nothing else:',
             `body part = ${selection.bodyPart};`,
             `tattoo style = ${styleName} (${STYLE_PROMPTS[selection.style]});`,
+            `a canonical example of this style is ${styleExample} — use it as creative inspiration, not as a subject to copy;`,
             `size = about ${selection.widthCm} by ${selection.heightCm} centimetres.`,
             'The concept must clearly suit that style, fit naturally on that body part,',
             'and work well at that real-world size.',
@@ -114,6 +116,7 @@ let TattooService = class TattooService {
     buildPrompt(payload) {
         const styleFragment = STYLE_PROMPTS[payload.style];
         const styleName = payload.style.replace(/-/g, ' ');
+        const styleExample = STYLE_EXAMPLES[payload.style];
         const orientation = payload.widthCm > payload.heightCm * 1.15
             ? 'wide horizontal composition'
             : payload.heightCm > payload.widthCm * 1.15
@@ -123,6 +126,7 @@ let TattooService = class TattooService {
             `tattoo design of ${payload.description.trim()}`,
             `${styleName} tattoo style`,
             styleFragment,
+            `rendered with the same visual language as a canonical ${styleName} example such as ${styleExample}`,
             'professional tattoo flash art, stencil-ready, clean confident linework, crisp sharp edges, bold readable silhouette, deliberate negative space',
             `${orientation}, a single cohesive subject sized and shaped for a ${payload.bodyPart} tattoo of roughly ${payload.widthCm} by ${payload.heightCm} cm`,
             'high detail, high contrast, vector-like precision, perfectly centered',

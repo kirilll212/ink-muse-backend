@@ -9,6 +9,7 @@ import TattooRepository from '#repositories/tattoo_repository'
 import PollinationsService from '#services/pollinations_service'
 import {
   imageDimensionsForSize,
+  STYLE_EXAMPLES,
   STYLE_PROMPTS,
   type BodyPart,
   type Style,
@@ -134,15 +135,20 @@ export default class TattooService {
   /**
    * Ask the AI to brainstorm a tattoo description from the user's selections.
    * The result is meant to pre-fill the description field on the generator.
+   *
+   * Inputs that feed the brainstorm: body part, style + canonical example for
+   * that style, and the real-world sketch size.
    */
   async suggestDescription(selection: TattooSelection): Promise<string> {
     const styleName = selection.style.replace(/-/g, ' ')
+    const styleExample = STYLE_EXAMPLES[selection.style]
 
     const instruction = [
       'You are a professional tattoo artist brainstorming a concept for a client.',
-      'Base the idea strictly on these three given parameters and nothing else:',
+      'Base the idea strictly on these parameters and nothing else:',
       `body part = ${selection.bodyPart};`,
       `tattoo style = ${styleName} (${STYLE_PROMPTS[selection.style]});`,
+      `a canonical example of this style is ${styleExample} — use it as creative inspiration, not as a subject to copy;`,
       `size = about ${selection.widthCm} by ${selection.heightCm} centimetres.`,
       'The concept must clearly suit that style, fit naturally on that body part,',
       'and work well at that real-world size.',
@@ -187,15 +193,22 @@ export default class TattooService {
   /**
    * Compose the prompt sent to the AI model from the user's selections.
    *
+   * Every selection ends up in the final prompt:
+   *   1. body part — drives placement, orientation and a size cue
+   *   2. style + canonical example for that style — anchors the visual language
+   *   3. sketch size (real-world cm) — drives composition and aspect ratio
+   *   4. description — the actual subject the user wants to see
+   *
    * The prompt is tuned to produce a clean, usable tattoo *design* — the
    * artwork only, on a plain white background — rather than a photo of a
    * tattooed body. The subject leads the prompt (diffusion models weight the
-   * opening strongest), followed by the style, craft cues, composition and a
-   * firm set of exclusions.
+   * opening strongest), followed by the style + example, craft cues,
+   * composition and a firm set of exclusions.
    */
   private buildPrompt(payload: GenerateTattooPayload): string {
     const styleFragment = STYLE_PROMPTS[payload.style]
     const styleName = payload.style.replace(/-/g, ' ')
+    const styleExample = STYLE_EXAMPLES[payload.style]
 
     const orientation =
       payload.widthCm > payload.heightCm * 1.15
@@ -208,6 +221,7 @@ export default class TattooService {
       `tattoo design of ${payload.description.trim()}`,
       `${styleName} tattoo style`,
       styleFragment,
+      `rendered with the same visual language as a canonical ${styleName} example such as ${styleExample}`,
       'professional tattoo flash art, stencil-ready, clean confident linework, crisp sharp edges, bold readable silhouette, deliberate negative space',
       `${orientation}, a single cohesive subject sized and shaped for a ${payload.bodyPart} tattoo of roughly ${payload.widthCm} by ${payload.heightCm} cm`,
       'high detail, high contrast, vector-like precision, perfectly centered',
